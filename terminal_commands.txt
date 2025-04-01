@@ -14,6 +14,175 @@ sudo make -j4    # Use 4 cores for faster build; reduce if your Pi is slow
 sudo make altinstall
 
 
+lorenzo@raspberrypi:~ $ pip install PyQt6
+Defaulting to user installation because normal site-packages is not writeable
+Looking in indexes: https://pypi.org/simple, https://www.piwheels.org/simple
+Collecting PyQt6
+  Using cached pyqt6-6.8.1.tar.gz (1.1 MB)
+  Installing build dependencies ... done
+  Getting requirements to build wheel ... done
+  Preparing metadata (pyproject.toml) ... error
+  error: subprocess-exited-with-error
+  
+  × Preparing metadata (pyproject.toml) did not run successfully.
+  │ exit code: 1
+  ╰─> [22 lines of output]
+      Traceback (most recent call last):
+        File "/home/lorenzo/.local/lib/python3.9/site-packages/pip/_vendor/pyproject_hooks/_in_process/_in_process.py", line 389, in <module>
+          main()
+        File "/home/lorenzo/.local/lib/python3.9/site-packages/pip/_vendor/pyproject_hooks/_in_process/_in_process.py", line 373, in main
+          json_out["return_val"] = hook(**hook_input["kwargs"])
+        File "/home/lorenzo/.local/lib/python3.9/site-packages/pip/_vendor/pyproject_hooks/_in_process/_in_process.py", line 178, in prepare_metadata_for_build_wheel
+          whl_basename = backend.build_wheel(metadata_directory, config_settings)
+        File "/tmp/pip-build-env-k3v4llub/overlay/lib/python3.9/site-packages/sipbuild/api.py", line 28, in build_wheel
+          project = AbstractProject.bootstrap('wheel',
+        File "/tmp/pip-build-env-k3v4llub/overlay/lib/python3.9/site-packages/sipbuild/abstract_project.py", line 74, in bootstrap
+          project.setup(pyproject, tool, tool_description)
+        File "/tmp/pip-build-env-k3v4llub/overlay/lib/python3.9/site-packages/sipbuild/project.py", line 629, in setup
+          self.apply_user_defaults(tool)
+        File "project.py", line 66, in apply_user_defaults
+          super().apply_user_defaults(tool)
+        File "/tmp/pip-build-env-k3v4llub/overlay/lib/python3.9/site-packages/pyqtbuild/project.py", line 51, in apply_user_defaults
+          super().apply_user_defaults(tool)
+        File "/tmp/pip-build-env-k3v4llub/overlay/lib/python3.9/site-packages/sipbuild/project.py", line 243, in apply_user_defaults
+          self.builder.apply_user_defaults(tool)
+        File "/tmp/pip-build-env-k3v4llub/overlay/lib/python3.9/site-packages/pyqtbuild/builder.py", line 49, in apply_user_defaults
+          raise PyProjectOptionException('qmake',
+      sipbuild.pyproject.PyProjectOptionException
+      [end of output]
+  
+  note: This error originates from a subprocess, and is likely not a problem with pip.
+error: metadata-generation-failed
+
+× Encountered error while generating package metadata.
+╰─> See above for output.
+
+note: This is an issue with the package mentioned above, not pip.
+hint: See above for details.
+lorenzo@raspberrypi:~ $ pip install --upgrade pip setuptools wheel
+Defaulting to user installation because normal site-packages is not writeable
+Looking in indexes: https://pypi.org/simple, https://www.piwheels.org/simple
+Requirement already satisfied: pip in ./.local/lib/python3.9/site-packages (25.0.1)
+Requirement already satisfied: setuptools in ./.local/lib/python3.9/site-packages (78.1.0)
+Requirement already satisfied: wheel in /usr/lib/python3/dist-packages (0.34.2)
+Collecting wheel
+  Downloading https://www.piwheels.org/simple/wheel/wheel-0.45.1-py3-none-any.whl (72 kB)
+Installing collected packages: wheel
+Successfully installed wheel-0.45.1
+lorenzo@raspberrypi:~ $ sudo apt-get install qt6-qmake
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+E: Unable to locate package qt6-qmake
+lorenzo@raspberrypi:~ $ export PATH=$PATH:/path/to/qmake
+lorenzo@raspberrypi:~ $ qmake --version
+bash: qmake: command not found
+lorenzo@raspberrypi:~ $ pip install qmake
+Defaulting to user installation because normal site-packages is not writeable
+Looking in indexes: https://pypi.org/simple, https://www.piwheels.org/simple
+ERROR: Could not find a version that satisfies the requirement qmake (from versions: none)
+ERROR: No matching distribution found for qmake
+lorenzo@raspberrypi:~ $ pip install PyQt6
+Defaulting to user installation because normal site-packages is not writeable
+Looking in indexes: https://pypi.org/simple, https://www.piwheels.org/simple
+Collecting PyQt6
+  Using cached pyqt6-6.8.1.tar.gz (1.1 MB)
+  Installing build dependencies ... done
+  Getting requirements to build wheel ... done
+  Preparing metadata (pyproject.toml) ... error
+  error: subprocess-exited-with-error
+  
+  × Preparing metadata (pyproject.toml) did not run successfully.
+  │ exit code: 1
+  ╰─> [22 lines of output]
+      Traceback (most recent call last):
+        File "/home/lorenzo/.local/lib/python3.9/site-packages/pip/_vendor/pyproject_hooks/_in_process/_in_process.py", line 389, in <module>
+          main()
+        File "/home/lorenzo/.local/lib/python3.9/site-packages/pip/_vendor/pyproject_hooks/_in_process/_in_process.py", line 373, in main
+          json_out["return_val"] = hook(**hook_input["kwargs"])
+        File "/home/lorenzo/.local/lib/python3.9/site-packages/pip/_vendor/pyproject_hooks/_in_process/_in_process.py", line 178, in prepare_metadata_for_build_wheel
+          whl_basename = backend.build_wheel(metadata_directory, config_settings)
+        File "/tmp/pip-build-env-7ekmih7w/overlay/lib/python3.9/site-packages/sipbuild/api.py", line 28, in build_wheel
+          project = AbstractProject.bootstrap('wheel',
+        File "/tmp/pip-build-env-7ekmih7w/overlay/lib/python3.9/site-packages/sipbuild/abstract_project.py", line 74, in bootstrap
+          project.setup(pyproject, tool, tool_description)
+        File "/tmp/pip-build-env-7ekmih7w/overlay/lib/python3.9/site-packages/sipbuild/project.py", line 629, in setup
+          self.apply_user_defaults(tool)
+        File "project.py", line 66, in apply_user_defaults
+          super().apply_user_defaults(tool)
+        File "/tmp/pip-build-env-7ekmih7w/overlay/lib/python3.9/site-packages/pyqtbuild/project.py", line 51, in apply_user_defaults
+          super().apply_user_defaults(tool)
+        File "/tmp/pip-build-env-7ekmih7w/overlay/lib/python3.9/site-packages/sipbuild/project.py", line 243, in apply_user_defaults
+          self.builder.apply_user_defaults(tool)
+        File "/tmp/pip-build-env-7ekmih7w/overlay/lib/python3.9/site-packages/pyqtbuild/builder.py", line 49, in apply_user_defaults
+          raise PyProjectOptionException('qmake',
+      sipbuild.pyproject.PyProjectOptionException
+      [end of output]
+  
+  note: This error originates from a subprocess, and is likely not a problem with pip.
+error: metadata-generation-failed
+
+× Encountered error while generating package metadata.
+╰─> See above for output.
+
+note: This is an issue with the package mentioned above, not pip.
+hint: See above for details.
+lorenzo@raspberrypi:~ $ sudo install PyQt6
+install: missing destination file operand after 'PyQt6'
+Try 'install --help' for more information.
+lorenzo@raspberrypi:~ $ pip install pyqt6-tools
+Defaulting to user installation because normal site-packages is not writeable
+Looking in indexes: https://pypi.org/simple, https://www.piwheels.org/simple
+Collecting pyqt6-tools
+  Downloading pyqt6_tools-6.4.2.3.3-py3-none-any.whl.metadata (8.3 kB)
+Requirement already satisfied: click in /usr/lib/python3/dist-packages (from pyqt6-tools) (7.1.2)
+Collecting pyqt6==6.4.2 (from pyqt6-tools)
+  Downloading PyQt6-6.4.2.tar.gz (1.0 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.0/1.0 MB 6.2 MB/s eta 0:00:00
+  Installing build dependencies ... done
+  Getting requirements to build wheel ... done
+  Preparing metadata (pyproject.toml) ... error
+  error: subprocess-exited-with-error
+  
+  × Preparing metadata (pyproject.toml) did not run successfully.
+  │ exit code: 1
+  ╰─> [23 lines of output]
+      pyproject.toml: line 7: using '[tool.sip.metadata]' to specify the project metadata is deprecated and will be removed in SIP v7.0.0, use '[project]' instead
+      Traceback (most recent call last):
+        File "/home/lorenzo/.local/lib/python3.9/site-packages/pip/_vendor/pyproject_hooks/_in_process/_in_process.py", line 389, in <module>
+          main()
+        File "/home/lorenzo/.local/lib/python3.9/site-packages/pip/_vendor/pyproject_hooks/_in_process/_in_process.py", line 373, in main
+          json_out["return_val"] = hook(**hook_input["kwargs"])
+        File "/home/lorenzo/.local/lib/python3.9/site-packages/pip/_vendor/pyproject_hooks/_in_process/_in_process.py", line 178, in prepare_metadata_for_build_wheel
+          whl_basename = backend.build_wheel(metadata_directory, config_settings)
+        File "/tmp/pip-build-env-nmd5gc_g/overlay/lib/python3.9/site-packages/sipbuild/api.py", line 28, in build_wheel
+          project = AbstractProject.bootstrap('wheel',
+        File "/tmp/pip-build-env-nmd5gc_g/overlay/lib/python3.9/site-packages/sipbuild/abstract_project.py", line 74, in bootstrap
+          project.setup(pyproject, tool, tool_description)
+        File "/tmp/pip-build-env-nmd5gc_g/overlay/lib/python3.9/site-packages/sipbuild/project.py", line 629, in setup
+          self.apply_user_defaults(tool)
+        File "project.py", line 65, in apply_user_defaults
+          super().apply_user_defaults(tool)
+        File "/tmp/pip-build-env-nmd5gc_g/overlay/lib/python3.9/site-packages/pyqtbuild/project.py", line 51, in apply_user_defaults
+          super().apply_user_defaults(tool)
+        File "/tmp/pip-build-env-nmd5gc_g/overlay/lib/python3.9/site-packages/sipbuild/project.py", line 243, in apply_user_defaults
+          self.builder.apply_user_defaults(tool)
+        File "/tmp/pip-build-env-nmd5gc_g/overlay/lib/python3.9/site-packages/pyqtbuild/builder.py", line 49, in apply_user_defaults
+          raise PyProjectOptionException('qmake',
+      sipbuild.pyproject.PyProjectOptionException
+      [end of output]
+  
+  note: This error originates from a subprocess, and is likely not a problem with pip.
+error: metadata-generation-failed
+
+× Encountered error while generating package metadata.
+╰─> See above for output.
+
+note: This is an issue with the package mentioned above, not pip.
+hint: See above for details.
+
+
+
 sudo apt update
 sudo apt install python3-pip -y
 pip3 install PyQt6 PyQt6-Qt6 PyQt6-sip PyQt6-WebEngine PyQt6-PDF
