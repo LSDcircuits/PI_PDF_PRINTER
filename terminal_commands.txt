@@ -1,6 +1,20 @@
 enter in terminal
 
 sudo apt update
+sudo apt install -y software-properties-common build-essential zlib1g-dev \
+  libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev \
+  libffi-dev libsqlite3-dev wget libbz2-dev
+
+cd /usr/src
+sudo wget https://www.python.org/ftp/python/3.12.2/Python-3.12.2.tgz
+sudo tar xzf Python-3.12.2.tgz
+cd Python-3.12.2
+sudo ./configure --enable-optimizations
+sudo make -j4    # Use 4 cores for faster build; reduce if your Pi is slow
+sudo make altinstall
+
+
+sudo apt update
 sudo apt install python3-pip -y
 pip3 install PyQt6 PyQt6-Qt6 PyQt6-sip PyQt6-WebEngine PyQt6-PDF
 
