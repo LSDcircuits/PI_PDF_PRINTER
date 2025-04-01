@@ -1,0 +1,9 @@
+enter in terminal
+
+sudo apt update
+sudo apt install cups cups-pdf python3-pyqt6 python3-pyqt6.qtpdf -y
+sudo usermod -a -G lpadmin pi
+sudo systemctl enable cups
+sudo systemctl start cups
+
+sudo cupsctl --remote-admin --remote-any --share-printers
