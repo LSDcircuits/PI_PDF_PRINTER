@@ -1,6 +1,11 @@
 enter in terminal
 
 sudo apt update
+sudo apt install python3-pip -y
+pip3 install PyQt6 PyQt6-Qt6 PyQt6-sip PyQt6-WebEngine PyQt6-PDF
+
+
+sudo apt update
 sudo apt install cups cups-pdf python3-pyqt6 python3-pyqt6.qtpdf -y
 sudo usermod -a -G lpadmin pi
 sudo systemctl enable cups
