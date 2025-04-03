@@ -49,3 +49,6 @@ sudo make altinstall
 
 # Check version
 python3.12 --version
+
+
+https://forums.raspberrypi.com/viewtopic.php?t=257914
