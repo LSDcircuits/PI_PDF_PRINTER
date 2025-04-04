@@ -1,94 +1,106 @@
 import sys
-import os
-import subprocess
-from PyQt6.QtWidgets import (
-    QApplication, QMainWindow, QPushButton,
-    QFileDialog, QWidget, QVBoxLayout, QMessageBox
-)
+import shutil
+from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QFileDialog, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QSpacerItem, QSizePolicy
 from PyQt6.QtPdfWidgets import QPdfView
 from PyQt6.QtPdf import QPdfDocument
-
+from PyQt6.QtCore import Qt
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
         self.setWindowTitle("CAE PS SAVER")
-        self.setFixedSize(900, 600)  # More Pi-friendly resolution
-
-        # Start CUPS service on app launch
-        self.ensure_cups_running()
-
-        # Set up layout
+        self.setFixedSize(1000, 700)
+        
+        # Widget layout
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
-        layout = QVBoxLayout()
-        central_widget.setLayout(layout)
+        main_layout = QVBoxLayout()
+        central_widget.setLayout(main_layout)
 
-        # Buttons
-        self.button1 = QPushButton("Open PDF", self)
-        self.button1.setGeometry(50, 50, 100, 40)
+        # CAE message
+        cae_label = QLabel("CAE", self)
+        cae_label.setStyleSheet("font-size: 48px; font-weight: bold;")
+        cae_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        main_layout.addWidget(cae_label)
+
+        # Welcome message
+        welcome_label = QLabel("Welcome to PI_printer", self)
+        welcome_label.setStyleSheet("font-size: 12px;")
+        welcome_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        main_layout.addWidget(welcome_label)
+
+        # Horizontal layout for buttons
+        button_layout = QHBoxLayout()
+        
+        self.button1 = QPushButton("button1", self)
+        self.button1.setStyleSheet("background-color: black; color: white; border-radius: 5px; padding: 10px;")
         self.button1.clicked.connect(self.open_pdf)
+        button_layout.addWidget(self.button1)
 
-        self.button2 = QPushButton("Check CUPS", self)
-        self.button2.setGeometry(200, 50, 100, 40)
-        self.button2.clicked.connect(self.check_cups_status)
+        self.button2 = QPushButton("button2", self)
+        self.button2.setStyleSheet("background-color: black; color: white; border-radius: 5px; padding: 10px;")
+        self.button2.clicked.connect(self.save_pdf)
+        button_layout.addWidget(self.button2)
 
-        self.button3 = QPushButton("Open Last Print", self)
-        self.button3.setGeometry(350, 50, 150, 40)
-        self.button3.clicked.connect(self.load_last_pdf)
+        self.button3 = QPushButton("button3", self)
+        self.button3.setStyleSheet("background-color: black; color: white; border-radius: 5px; padding: 10px;")
+        self.button3.clicked.connect(self.button3_clicked)
+        button_layout.addWidget(self.button3)
 
-        self.button4 = QPushButton("Quit", self)
-        self.button4.setGeometry(550, 50, 100, 40)
-        self.button4.clicked.connect(self.close)
+        self.button4 = QPushButton("button4", self)
+        self.button4.setStyleSheet("background-color: black; color: white; border-radius: 5px; padding: 10px;")
+        self.button4.clicked.connect(self.button4_clicked)
+        button_layout.addWidget(self.button4)
 
-        # PDF Viewer
+        # Add button layout to main layout
+        main_layout.addLayout(button_layout)
+
+        # PDF viewer
         self.pdf_viewer = QPdfView(self)
         self.pdf_document = QPdfDocument(self)
         self.pdf_viewer.setDocument(self.pdf_document)
+
+        # Configure to load the full document
         self.pdf_viewer.setPageMode(QPdfView.PageMode.MultiPage)
         self.pdf_viewer.setZoomFactor(1.0)
 
-        layout.addWidget(self.pdf_viewer)
+        # Make the PDF viewer expand to fill the remaining space
+        self.pdf_viewer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
-    def ensure_cups_running(self):
-        try:
-            subprocess.run(["sudo", "systemctl", "start", "cups"], check=True)
-        except subprocess.CalledProcessError:
-            QMessageBox.critical(self, "Error", "Failed to start CUPS service.")
+        # Add pdf viewer to layout
+        main_layout.addWidget(self.pdf_viewer)
 
-    def check_cups_status(self):
-        result = subprocess.run(["systemctl", "is-active", "cups"], capture_output=True, text=True)
-        if "active" in result.stdout:
-            QMessageBox.information(self, "CUPS Status", "CUPS is running.")
-        else:
-            QMessageBox.warning(self, "CUPS Status", "CUPS is NOT running.")
+        # Variable to store the path of the opened PDF
+        self.current_pdf_path = None
 
     def open_pdf(self):
-        file_path, _ = QFileDialog.getOpenFileName(self, "Open PDF File", os.path.expanduser("~/PDF"), "PDF Files (*.pdf)")
+        # Opening the pdf file
+        file_path, _ = QFileDialog.getOpenFileName(self, "Open PDF File", "/Users/ldaid/python_project/pdf_loc", "PDF Files (*.pdf)")
         if file_path:
             self.pdf_document.load(file_path)
-            print("PDF Loaded:", file_path)
+            self.current_pdf_path = file_path
+        print("button 1 clicked")
 
-    def load_last_pdf(self):
-        pdf_dir = os.path.expanduser("~/PDF")
-        try:
-            files = sorted(
-                (os.path.join(pdf_dir, f) for f in os.listdir(pdf_dir) if f.endswith(".pdf")),
-                key=os.path.getmtime,
-                reverse=True
-            )
-            if files:
-                self.pdf_document.load(files[0])
-                print("Loaded most recent PDF:", files[0])
-            else:
-                QMessageBox.information(self, "Info", "No PDFs found in ~/PDF.")
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to load recent PDF:\n{e}")
+    def save_pdf(self):
+        if self.current_pdf_path:
+            save_path, _ = QFileDialog.getSaveFileName(self, "Save PDF File", "", "PDF Files (*.pdf)")
+            if save_path:
+                shutil.copy(self.current_pdf_path, save_path)
+                print(f"PDF saved to {save_path}")
+        else:
+            print("No PDF file is currently opened.")
+        print("button 2 clicked")
 
+    def button3_clicked(self):
+        print("button 3 clicked")
+
+    def button4_clicked(self):
+        print("button 4 clicked")
 
 app = QApplication(sys.argv)
+
 window = MainWindow()
 window.show()
-app.exec()
 
+app.exec()
