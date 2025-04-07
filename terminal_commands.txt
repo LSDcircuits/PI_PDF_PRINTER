@@ -1,54 +1,30 @@
-enter in terminal
 
+# Update the package list
 sudo apt update
-sudo apt install -y software-properties-common build-essential zlib1g-dev \
-  libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev \
-  libffi-dev libsqlite3-dev wget libbz2-dev
 
-cd /usr/src
-sudo wget https://www.python.org/ftp/python/3.12.2/Python-3.12.2.tgz
-sudo tar xzf Python-3.12.2.tgz
-cd Python-3.12.2
-sudo ./configure --enable-optimizations
-sudo make -j4    # Use 4 cores for faster build; reduce if your Pi is slow
-sudo make altinstall
+# Install Python 3 and venv if not already installed
+sudo apt install -y python3 python3-venv python3-pip
 
+# Create a virtual environment (replace 'myenv' with your desired name)
+python3 -m venv myenv
 
+# Activate the virtual environment
+source myenv/bin/activate
 
-sudo apt update
-sudo apt install python3-pip -y
-pip3 install PyQt6 PyQt6-Qt6 PyQt6-sip PyQt6-WebEngine PyQt6-PDF
+# Upgrade pip inside the virtual environment
+pip install --upgrade pip
 
+# Install PySide6 inside the virtual environment
+pip install PySide6
 
-sudo apt update
-sudo apt install cups cups-pdf python3-pyqt6 python3-pyqt6.qtpdf -y
-sudo usermod -a -G lpadmin pi
-sudo systemctl enable cups
-sudo systemctl start cups
+# Verify the installation
+python -c "from PySide6.QtWidgets import QApplication; print('PySide6 installed successfully')"
 
-sudo cupsctl --remote-admin --remote-any --share-printers
+# (Optional) Install additional PySide6 tools
+pip install PySide6-Addons PySide6-Essentials
 
-// update
-sudo apt update && sudo apt upgrade -y
+# Verify the PySide6 version
+python -c "import PySide6; print(PySide6.__version__)"
 
-# Install dependencies
-sudo apt install -y build-essential zlib1g-dev libncurses5-dev libgdbm-dev \
-libnss3-dev libssl-dev libreadline-dev libffi-dev libsqlite3-dev wget \
-libbz2-dev
-
-# Download and extract Python 3.12.2
-cd /usr/src
-sudo wget https://www.python.org/ftp/python/3.12.2/Python-3.12.2.tgz
-sudo tar xzf Python-3.12.2.tgz
-cd Python-3.12.2
-
-# Build and install
-sudo ./configure --enable-optimizations
-sudo make -j4
-sudo make altinstall
-
-# Check version
-python3.12 --version
-
-
-https://forums.raspberrypi.com/viewtopic.php?t=257914
+# When done, deactivate the virtual environment
+deactivate
