@@ -1,0 +1,36 @@
+Manual instalation for PI printer. 
+enter these in the terminal on a raspberry pi 4 running rapbian 64. 
+
+// install Python3
+// installlibs
+// install cups
+
+//install netcat
+
+sudo update
+sudo apt install netcat-openbsd
+
+//set up netcat
+// must make a file in /usr/local/bin/ called rawprint.sh
+// with nano enter:
+
+#!/bin/bash
+tempfile = $(mktemp)
+cat -> "$tempfie"
+lp -d PDF -U pi "tempfile"
+rm "$tempfile"
+
+//save it and make it executable by:
+sudo chmod +x /usr/local/bin/rawprint.sh
+
+//the wrapper script
+
+sudo nano /usr/local/bin/rawprint_server.sh
+
+#!/bin/
+while true; do
+ nc -1 -p 9100 / /usr/local/bin/rawprint.sh
+done
+
+Make it executable:
+sudo chmod +x /usr/local/bin/rawprint_server.sh
