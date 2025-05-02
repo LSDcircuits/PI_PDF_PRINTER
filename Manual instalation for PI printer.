@@ -14,6 +14,8 @@ sudo apt install netcat-openbsd
 // must make a file in /usr/local/bin/ called rawprint.sh
 // with nano enter:
 
+sudo nano /usr/local/bin/rawprint.sh
+
 #!/bin/bash
 tempfile = $(mktemp)
 cat -> "$tempfie"
