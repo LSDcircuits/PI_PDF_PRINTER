@@ -1,5 +1,6 @@
 import sys
 import shutil
+import subprocess
 from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton, QFileDialog, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QSpacerItem, QSizePolicy
 from PySide6.QtPdfWidgets import QPdfView
 from PySide6.QtPdf import QPdfDocument
@@ -33,25 +34,30 @@ class MainWindow(QMainWindow):
         # Horizontal layout for buttons
         button_layout = QHBoxLayout()
         
-        self.button1 = QPushButton("button1", self)
+        self.button1 = QPushButton("Start Listener", self)
         self.button1.setStyleSheet("background-color: black; color: white; border-radius: 5px; padding: 10px;")
-        self.button1.clicked.connect(self.open_pdf)
+        self.button1.clicked.connect(self.start_listener)
         button_layout.addWidget(self.button1)
 
-        self.button2 = QPushButton("button2", self)
+        self.button2 = QPushButton("SYSTEM Reset", self)
         self.button2.setStyleSheet("background-color: black; color: white; border-radius: 5px; padding: 10px;")
-        self.button2.clicked.connect(self.save_pdf)
+        self.button2.clicked.connect(self.system_reset)
         button_layout.addWidget(self.button2)
 
-        self.button3 = QPushButton("button3", self)
+        self.button3 = QPushButton("Open PDF", self)
         self.button3.setStyleSheet("background-color: black; color: white; border-radius: 5px; padding: 10px;")
-        self.button3.clicked.connect(self.button3_clicked)
+        self.button3.clicked.connect(self.open_pdf)
         button_layout.addWidget(self.button3)
 
-        self.button4 = QPushButton("button4", self)
+        self.button4 = QPushButton("Save PDF To", self)
         self.button4.setStyleSheet("background-color: black; color: white; border-radius: 5px; padding: 10px;")
-        self.button4.clicked.connect(self.button4_clicked)
+        self.button4.clicked.connect(self.save_pdf)
         button_layout.addWidget(self.button4)
+
+        self.clear_data_button = QPushButton("Clear Data", self)
+        self.clear_data_button.setStyleSheet("background-color: black; color: white; border-radius: 5px; padding: 10px;")
+        self.clear_data_button.clicked.connect(self.clear_data)
+        button_layout.addWidget(self.clear_data_button)
 
         # Add button layout to main layout
         main_layout.addLayout(button_layout)
@@ -74,13 +80,37 @@ class MainWindow(QMainWindow):
         # Variable to store the path of the opened PDF
         self.current_pdf_path = None
 
+    def start_listener(self):
+        try:
+            # Execute the rawprint_server.sh script
+            subprocess.run(["sudo", "/usr/local/bin/rawprint_server.sh"], check=True)
+            print("Listener started successfully.")
+        except subprocess.CalledProcessError as e:
+            print(f"Error while starting the listener: {e}")
+
+    def system_reset(self):
+        try:
+            # Disable CUPS
+            subprocess.run(["sudo", "systemctl", "stop", "cups"], check=True)
+            print("CUPS service stopped.")
+
+            # Enable CUPS
+            subprocess.run(["sudo", "systemctl", "start", "cups"], check=True)
+            print("CUPS service started.")
+
+            # Restart CUPS
+            subprocess.run(["sudo", "systemctl", "restart", "cups"], check=True)
+            print("CUPS service restarted.")
+        except subprocess.CalledProcessError as e:
+            print(f"Error while resetting CUPS: {e}")
+
     def open_pdf(self):
         # Opening the pdf file
         file_path, _ = QFileDialog.getOpenFileName(self, "Open PDF File", "/Users/ldaid/python_project/pdf_loc", "PDF Files (*.pdf)")
         if file_path:
             self.pdf_document.load(file_path)
             self.current_pdf_path = file_path
-        print("button 1 clicked")
+        print("Open PDF clicked")
 
     def save_pdf(self):
         if self.current_pdf_path:
@@ -90,13 +120,10 @@ class MainWindow(QMainWindow):
                 print(f"PDF saved to {save_path}")
         else:
             print("No PDF file is currently opened.")
-        print("button 2 clicked")
+        print("Save PDF To clicked")
 
-    def button3_clicked(self):
-        print("button 3 clicked")
-
-    def button4_clicked(self):
-        print("button 4 clicked")
+    def clear_data(self):
+        print("Clear Data clicked")
 
 app = QApplication(sys.argv)
 
