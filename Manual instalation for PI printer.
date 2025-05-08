@@ -1,13 +1,38 @@
 Manual instalation for PI printer. 
 enter these in the terminal on a raspberry pi 4 running rapbian 64. 
 
-// install Python3
-// installlibs
-// install cups
+// Update the package list
+sudo apt update
+
+// Install Python 3 and venv if not already installed
+sudo apt install -y python3 python3-venv python3-pip
+
+// Create a virtual environment (replace 'myenv' with your desired name)
+python3 -m venv myenv
+
+// Activate the virtual environment
+source myenv/bin/activate
+
+// Upgrade pip inside the virtual environment
+pip install --upgrade pip
+
+// Install PySide6 inside the virtual environment
+pip install PySide6
+
+// Verify the installation
+python -c "from PySide6.QtWidgets import QApplication; print('PySide6 installed successfully')"
+
+// (Optional) Install additional PySide6 tools
+pip install PySide6-Addons PySide6-Essentials
+
+// Verify the PySide6 version
+python -c "import PySide6; print(PySide6.__version__)"
+
+// When done, deactivate the virtual environment
+deactivate
 
 //install netcat
 
-sudo update
 sudo apt install netcat-openbsd
 
 //set up netcat
@@ -37,6 +62,8 @@ done
 Make it executable:
 sudo chmod +x /usr/local/bin/rawprint_server.sh
 
-Run listener
 
+
+
+Run listener
 sudo /usr/local/bin/rawprint_server.sh
