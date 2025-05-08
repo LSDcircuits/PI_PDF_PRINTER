@@ -31,6 +31,12 @@ python -c "import PySide6; print(PySide6.__version__)"
 // When done, deactivate the virtual environment
 deactivate
 
+// download repository for GUI
+
+wget https://github.com/LSDcircuits/PI_PDF_PRINTER/archive/refs/heads/main.zip
+unzip main.zip
+cd PI_PDF_PRINTER-main/<directory-path>
+
 //install netcat
 
 sudo apt install netcat-openbsd
@@ -59,11 +65,12 @@ while true; do
  nc -1 -p 9100 / /usr/local/bin/rawprint.sh
 done
 
-Make it executable:
+//Make it executable:
 sudo chmod +x /usr/local/bin/rawprint_server.sh
 
+// make the program start at boot
+
+sudo nano /etc/rc.local
+/usr/bin/python3 <path-to-your-script>/your_script.py &
 
 
-
-Run listener
-sudo /usr/local/bin/rawprint_server.sh
