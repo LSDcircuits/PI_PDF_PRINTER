@@ -1,10 +1,39 @@
 import sys
 import shutil
 import subprocess
-from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton, QFileDialog, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QSpacerItem, QSizePolicy
+from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton, QFileDialog, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QSizePolicy
 from PySide6.QtPdfWidgets import QPdfView
 from PySide6.QtPdf import QPdfDocument
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QThread, Signal
+
+
+class ListenerThread(QThread):
+    job_received = Signal(str)
+    error = Signal(str)
+
+    def run(self):
+        try:
+            # Stop any running instance of rawprint_server.sh
+            subprocess.run(["sudo", "pkill", "-f", "/usr/local/bin/rawprint_server.sh"], check=False)  # Non-blocking stop
+
+            # Start the rawprint_server.sh script and capture its output
+            process = subprocess.Popen(
+                ["sudo", "/usr/local/bin/rawprint_server.sh"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+
+            # Read the output line by line
+            for line in iter(process.stdout.readline, ""):
+                if line.strip():  # If the line is not empty
+                    self.job_received.emit(f"Job received: {line.strip()}")
+
+            process.stdout.close()
+            process.wait()
+        except Exception as e:
+            self.error.emit(f"Unexpected error: {e}")
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -33,11 +62,6 @@ class MainWindow(QMainWindow):
 
         # Horizontal layout for buttons
         button_layout = QHBoxLayout()
-        
-        self.button1 = QPushButton("Start Listener", self)
-        self.button1.setStyleSheet("background-color: black; color: white; border-radius: 5px; padding: 10px;")
-        self.button1.clicked.connect(self.start_listener)
-        button_layout.addWidget(self.button1)
 
         self.button2 = QPushButton("SYSTEM Reset", self)
         self.button2.setStyleSheet("background-color: black; color: white; border-radius: 5px; padding: 10px;")
@@ -62,6 +86,12 @@ class MainWindow(QMainWindow):
         # Add button layout to main layout
         main_layout.addLayout(button_layout)
 
+        # Status label
+        self.status_label = QLabel("", self)
+        self.status_label.setStyleSheet("font-size: 14px; color: green;")
+        self.status_label.setAlignment(Qt.AlignCenter)
+        main_layout.addWidget(self.status_label)
+
         # PDF viewer
         self.pdf_viewer = QPdfView(self)
         self.pdf_document = QPdfDocument(self)
@@ -80,36 +110,43 @@ class MainWindow(QMainWindow):
         # Variable to store the path of the opened PDF
         self.current_pdf_path = None
 
+        # Show startup message
+        self.update_status("Application started.")
+
+        # Start the listener thread
+        self.start_listener()
+
     def start_listener(self):
-        try:
-            # Execute the rawprint_server.sh script
-            subprocess.run(["sudo", "/usr/local/bin/rawprint_server.sh"], check=True)
-            print("Listener started successfully.")
-        except subprocess.CalledProcessError as e:
-            print(f"Error while starting the listener: {e}")
+        self.listener_thread = ListenerThread()
+        self.listener_thread.job_received.connect(self.update_status)
+        self.listener_thread.error.connect(self.update_status)
+        self.listener_thread.start()
 
     def system_reset(self):
         try:
             # Disable CUPS
             subprocess.run(["sudo", "systemctl", "stop", "cups"], check=True)
-            print("CUPS service stopped.")
+            self.update_status("CUPS service stopped.")
 
             # Enable CUPS
             subprocess.run(["sudo", "systemctl", "start", "cups"], check=True)
-            print("CUPS service started.")
+            self.update_status("CUPS service started.")
 
             # Restart CUPS
             subprocess.run(["sudo", "systemctl", "restart", "cups"], check=True)
-            print("CUPS service restarted.")
+            self.update_status("CUPS service restarted.")
         except subprocess.CalledProcessError as e:
-            print(f"Error while resetting CUPS: {e}")
+            self.update_status(f"Error while resetting CUPS: {e}")
 
     def open_pdf(self):
         # Opening the pdf file
-        file_path, _ = QFileDialog.getOpenFileName(self, "Open PDF File", "/Users/ldaid/python_project/pdf_loc", "PDF Files (*.pdf)")
+        file_path, _ = QFileDialog.getOpenFileName(self, "Open PDF File", "/var/spool/cups-pdf/ANONYMOUS", "PDF Files (*.pdf)")
         if file_path:
             self.pdf_document.load(file_path)
             self.current_pdf_path = file_path
+            self.update_status(f"PDF opened: {file_path}")
+        else:
+            self.update_status("No PDF file selected.")
         print("Open PDF clicked")
 
     def save_pdf(self):
@@ -117,13 +154,25 @@ class MainWindow(QMainWindow):
             save_path, _ = QFileDialog.getSaveFileName(self, "Save PDF File", "", "PDF Files (*.pdf)")
             if save_path:
                 shutil.copy(self.current_pdf_path, save_path)
-                print(f"PDF saved to {save_path}")
+                self.update_status(f"PDF saved to {save_path}")
+            else:
+                self.update_status("Save operation canceled.")
         else:
-            print("No PDF file is currently opened.")
+            self.update_status("No PDF file is currently opened.")
         print("Save PDF To clicked")
 
     def clear_data(self):
+        self.update_status("Clear Data clicked.")
         print("Clear Data clicked")
+
+    def update_status(self, message):
+        self.status_label.setText(message)
+
+    def closeEvent(self, event):
+        if self.listener_thread and self.listener_thread.isRunning():
+            self.listener_thread.terminate()  # Forcefully stop the thread
+        event.accept()
+
 
 app = QApplication(sys.argv)
 
