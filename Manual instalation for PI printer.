@@ -36,3 +36,7 @@ done
 
 Make it executable:
 sudo chmod +x /usr/local/bin/rawprint_server.sh
+
+Run listener
+
+sudo /usr/local/bin/rawprint_server.sh
