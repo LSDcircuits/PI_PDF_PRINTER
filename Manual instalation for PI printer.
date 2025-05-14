@@ -68,7 +68,8 @@ done
 //Make it executable:
 sudo chmod +x /usr/local/bin/rawprint_server.sh
 
-// make the program start at boot
+// make the program start at boot 
+/// still needs to be applied. 
 
 sudo nano /etc/rc.local
 /usr/bin/python3 <path-to-your-script>/your_script.py &
