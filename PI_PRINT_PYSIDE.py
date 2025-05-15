@@ -161,10 +161,8 @@ class MainWindow(QMainWindow):
         else:
             self.update_status("No PDF file is currently opened.")
         print("Save PDF To clicked")
-
-
-# here the data of where the files are saved gets cleared for a new set of QTG's
-def clear_data(self):
+    # here the data of where the files are saved gets cleared for a new set of QTG's
+     def clear_data(self):
     directory = "/var/spool/cups-pdf/ANONYMUS"
     try:
         # Check if the directory exists
