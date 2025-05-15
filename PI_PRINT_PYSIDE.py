@@ -5,6 +5,7 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton, QFileDialo
 from PySide6.QtPdfWidgets import QPdfView
 from PySide6.QtPdf import QPdfDocument
 from PySide6.QtCore import Qt, QThread, Signal
+import os
 
 
 class ListenerThread(QThread):
@@ -161,9 +162,23 @@ class MainWindow(QMainWindow):
             self.update_status("No PDF file is currently opened.")
         print("Save PDF To clicked")
 
-    def clear_data(self):
-        self.update_status("Clear Data clicked.")
-        print("Clear Data clicked")
+
+# here the data of where the files are saved gets cleared for a new set of QTG's
+def clear_data(self):
+    directory = "/var/spool/cups-pdf/ANONYMUS"
+    try:
+        # Check if the directory exists
+        if os.path.exists(directory):
+            # Loop through and remove all files in the directory
+            for filename in os.listdir(directory):
+                file_path = os.path.join(directory, filename)
+                if os.path.isfile(file_path):
+                    os.remove(file_path)
+            self.update_status("All files in the directory have been deleted.")
+        else:
+            self.update_status("Directory does not exist.")
+    except Exception as e:
+        self.update_status(f"Error while clearing data: {e}")
 
     def update_status(self, message):
         self.status_label.setText(message)
