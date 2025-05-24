@@ -10,10 +10,10 @@ from PySide6.QtPdfWidgets import QPdfView
 from PySide6.QtPdf import QPdfDocument
 from PySide6.QtCore import Qt, QThread, Signal
 import os
-import re
 
-CONFIG_FILE = "listener_config.txt"  # Save IP, Port, Mask config here
+CONFIG_FILE = "listener_config.txt"
 RAWPRINT_SERVER_PATH = "/usr/local/bin/rawprint_server.sh"
+RAWPRINT_SCRIPT_PATH = "/usr/local/bin/rawprint.sh"
 
 def load_config():
     if os.path.exists(CONFIG_FILE):
@@ -29,21 +29,33 @@ def save_config(ip, port, mask):
     with open(CONFIG_FILE, "w") as f:
         f.write(f"{ip}\n{port}\n{mask}\n")
 
-def update_rawprint_server_port(new_port):
-    # Replace the port number in /usr/local/bin/rawprint_server.sh
+# --- MODIFIED: Always create a new rawprint_server.sh with the new port
+def write_rawprint_server(port):
+    script = f"""#!/bin/bash
+
+while true; do
+  nc -l -p {port} | /usr/local/bin/rawprint.sh
+done
+
+"""
     try:
-        with open(RAWPRINT_SERVER_PATH, "r") as f:
-            lines = f.readlines()
-        new_lines = []
-        for line in lines:
-            # Replace the port number after '-p'
-            new_line = re.sub(r'(-p )\d+', r'\g<1>{}'.format(new_port), line)
-            new_lines.append(new_line)
+        # Remove old script if exists
+        if os.path.exists(RAWPRINT_SERVER_PATH):
+            os.remove(RAWPRINT_SERVER_PATH)
+        # Write new one
         with open(RAWPRINT_SERVER_PATH, "w") as f:
-            f.writelines(new_lines)
-        return True, f"Port in rawprint_server.sh updated to {new_port}."
+            f.write(script)
+        return True, f"rawprint_server.sh updated to port {port}."
     except Exception as e:
-        return False, f"Failed to update port in rawprint_server.sh: {e}"
+        return False, f"Failed to update rawprint_server.sh: {e}"
+
+def make_scripts_executable():
+    try:
+        subprocess.run(["sudo", "chmod", "+x", RAWPRINT_SCRIPT_PATH], check=True)
+        subprocess.run(["sudo", "chmod", "+x", RAWPRINT_SERVER_PATH], check=True)
+        return True, "Scripts are now executable."
+    except Exception as e:
+        return False, f"Failed to make scripts executable: {e}"
 
 class ListenerThread(QThread):
     job_received = Signal(str)
@@ -151,7 +163,7 @@ class MainWindow(QMainWindow):
         self.port_input.setPlaceholderText("Enter port (e.g. 9100)")
         self.mask_input.setPlaceholderText("Enter subnet mask bits (e.g. 24)")
 
-        config_layout.addWidget(QLabel("Set Listener IP Address:"))
+        config_layout.addWidget(QLabel("Set IP Address (also used as Gateway and DNS):"))
         config_layout.addWidget(self.ip_input)
         config_layout.addWidget(QLabel("Set Listener Port:"))
         config_layout.addWidget(self.port_input)
@@ -165,7 +177,6 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(self.config_input_widget)
         # ---------------------------------------------------------------
 
-        # Load config and set defaults
         ip, port, mask = load_config()
         self.ip_input.setText(ip)
         self.port_input.setText(port)
@@ -192,26 +203,30 @@ class MainWindow(QMainWindow):
         self.listener_port = port
         self.subnet_mask = mask
 
-        ok, msg = update_rawprint_server_port(port)
+        ok, msg = write_rawprint_server(port)
         self.update_status(msg)
+        ok2, msg2 = make_scripts_executable()
+        self.update_status(msg2)
         self.set_static_ip(ip, mask)
         self.config_input_widget.hide()
         self.restart_listener()
 
-    def set_static_ip(self, ip, mask="24", gateway="10.0.0.1", interface="Wired connection 1"):
-        dns = ip  # DNS is the same as the IP
+    # --- MODIFIED: Use IP for address, gateway, and DNS
+    def set_static_ip(self, ip, mask="24", interface="Wired connection 1"):
+        gateway = ip
+        dns = ip
         try:
             subprocess.run([
-                "sudo", "nmcli", "con", "mod", interface, 
-                "ipv4.addresses", f"{ip}/{mask}", 
+                "sudo", "nmcli", "con", "mod", interface,
+                "ipv4.addresses", f"{ip}/{mask}",
                 "ipv4.method", "manual"
             ], check=True)
             subprocess.run([
-                "sudo", "nmcli", "con", "mod", interface, 
+                "sudo", "nmcli", "con", "mod", interface,
                 "ipv4.gateway", gateway
             ], check=True)
             subprocess.run([
-                "sudo", "nmcli", "con", "mod", interface, 
+                "sudo", "nmcli", "con", "mod", interface,
                 "ipv4.dns", dns
             ], check=True)
             subprocess.run([
@@ -220,7 +235,7 @@ class MainWindow(QMainWindow):
             subprocess.run([
                 "sudo", "nmcli", "con", "up", interface
             ], check=True)
-            self.update_status(f"Static IP set to {ip}/{mask} for {interface}")
+            self.update_status(f"Static IP/gateway/dns set to {ip}/{mask} for {interface}")
         except subprocess.CalledProcessError as e:
             self.update_status(f"Failed to set static IP: {e}")
 
@@ -282,7 +297,12 @@ class MainWindow(QMainWindow):
             self.update_status(f"Error while clearing data: {e}")
 
     def update_status(self, message):
-        self.status_label.setText(message)
+        # --- MODIFIED: Show multiple messages if called twice in save_config
+        prev = self.status_label.text()
+        if prev and prev != message:
+            self.status_label.setText(prev + "\n" + message)
+        else:
+            self.status_label.setText(message)
 
     def closeEvent(self, event):
         if hasattr(self, "listener_thread") and self.listener_thread.isRunning():
