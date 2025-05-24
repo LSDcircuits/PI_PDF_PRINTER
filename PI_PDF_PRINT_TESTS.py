@@ -315,11 +315,8 @@ class MainWindow(QMainWindow):
             self.update_status(f"Error while clearing data: {e}")
 
     def update_status(self, message):
-        prev = self.status_label.text()
-        if prev and prev != message:
-            self.status_label.setText(prev + "\n" + message)
-        else:
-            self.status_label.setText(message)
+        
+        self.status_label.setText(message)
 
     def closeEvent(self, event):
         if hasattr(self, "listener_thread") and self.listener_thread.isRunning():
