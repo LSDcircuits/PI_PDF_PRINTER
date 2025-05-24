@@ -285,12 +285,18 @@ class MainWindow(QMainWindow):
 
     def save_pdf(self):
         if self.current_pdf_path:
-            save_path, _ = QFileDialog.getSaveFileName(self, "Save PDF File", "", "PDF Files (*.pdf)")
-            if save_path:
-                shutil.copy(self.current_pdf_path, save_path)
-                self.update_status(f"PDF saved to {save_path}")
+            # Let user choose a directory, defaulting to /media (where USBs are usually mounted)
+            directory = QFileDialog.getExistingDirectory(self, "Select Directory to Save PDF", "/media")
+            if directory:
+                # Ask for a file name
+                filename, _ = QFileDialog.getSaveFileName(self, "Save PDF As", os.path.join(directory, "output.pdf"), "PDF Files (*.pdf)")
+                if filename:
+                    shutil.copy(self.current_pdf_path, filename)
+                    self.update_status(f"PDF saved to {filename}")
+                else:
+                    self.update_status("Save operation canceled.")
             else:
-                self.update_status("Save operation canceled.")
+                self.update_status("No directory selected.")
         else:
             self.update_status("No PDF file is currently opened.")
 
