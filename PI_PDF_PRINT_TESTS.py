@@ -1,6 +1,7 @@
 import sys
 import shutil
 import subprocess
+import tempfile
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QPushButton, QFileDialog,
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QSizePolicy,
@@ -29,7 +30,6 @@ def save_config(ip, port, mask):
     with open(CONFIG_FILE, "w") as f:
         f.write(f"{ip}\n{port}\n{mask}\n")
 
-# --- MODIFIED: Always create a new rawprint_server.sh with the new port
 def write_rawprint_server(port):
     script = f"""#!/bin/bash
 
@@ -39,12 +39,12 @@ done
 
 """
     try:
-        # Remove old script if exists
-        if os.path.exists(RAWPRINT_SERVER_PATH):
-            os.remove(RAWPRINT_SERVER_PATH)
-        # Write new one
-        with open(RAWPRINT_SERVER_PATH, "w") as f:
-            f.write(script)
+        # Write to a temp file first
+        with tempfile.NamedTemporaryFile("w", delete=False) as tmpfile:
+            tmpfile.write(script)
+            tmp_filename = tmpfile.name
+        # Move with sudo
+        subprocess.run(["sudo", "mv", tmp_filename, RAWPRINT_SERVER_PATH], check=True)
         return True, f"rawprint_server.sh updated to port {port}."
     except Exception as e:
         return False, f"Failed to update rawprint_server.sh: {e}"
@@ -57,6 +57,15 @@ def make_scripts_executable():
     except Exception as e:
         return False, f"Failed to make scripts executable: {e}"
 
+def stop_nc_listener():
+    try:
+        # Kill any running nc (netcat) processes related to the server script
+        subprocess.run(["sudo", "pkill", "-f", RAWPRINT_SERVER_PATH], check=False)
+        subprocess.run(["sudo", "pkill", "-f", "nc -l -p"], check=False)  # Extra: kill leftover nc
+        return True, "Stopped running listeners."
+    except Exception as e:
+        return False, f"Failed to stop listeners: {e}"
+
 class ListenerThread(QThread):
     job_received = Signal(str)
     error = Signal(str)
@@ -68,7 +77,7 @@ class ListenerThread(QThread):
 
     def run(self):
         try:
-            subprocess.run(["sudo", "pkill", "-f", RAWPRINT_SERVER_PATH], check=False)
+            stop_nc_listener()  # Always stop before starting new listener
             env = os.environ.copy()
             if self.port:
                 env["LISTEN_PORT"] = self.port
@@ -203,6 +212,10 @@ class MainWindow(QMainWindow):
         self.listener_port = port
         self.subnet_mask = mask
 
+        # Stop any running listeners before making changes
+        ok_stop, msg_stop = stop_nc_listener()
+        self.update_status(msg_stop)
+
         ok, msg = write_rawprint_server(port)
         self.update_status(msg)
         ok2, msg2 = make_scripts_executable()
@@ -211,7 +224,6 @@ class MainWindow(QMainWindow):
         self.config_input_widget.hide()
         self.restart_listener()
 
-    # --- MODIFIED: Use IP for address, gateway, and DNS
     def set_static_ip(self, ip, mask="24", interface="Wired connection 1"):
         gateway = ip
         dns = ip
@@ -297,7 +309,6 @@ class MainWindow(QMainWindow):
             self.update_status(f"Error while clearing data: {e}")
 
     def update_status(self, message):
-        # --- MODIFIED: Show multiple messages if called twice in save_config
         prev = self.status_label.text()
         if prev and prev != message:
             self.status_label.setText(prev + "\n" + message)
