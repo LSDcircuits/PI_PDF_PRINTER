@@ -10,8 +10,10 @@ from PySide6.QtPdfWidgets import QPdfView
 from PySide6.QtPdf import QPdfDocument
 from PySide6.QtCore import Qt, QThread, Signal
 import os
+import re
 
-CONFIG_FILE = "listener_config.txt"  # Save IP and Port config here
+CONFIG_FILE = "listener_config.txt"  # Save IP, Port, Mask config here
+RAWPRINT_SERVER_PATH = "/usr/local/bin/rawprint_server.sh"
 
 def load_config():
     if os.path.exists(CONFIG_FILE):
@@ -19,12 +21,29 @@ def load_config():
             lines = f.read().splitlines()
         ip = lines[0] if len(lines) > 0 else ""
         port = lines[1] if len(lines) > 1 else ""
-        return ip, port
-    return "", ""
+        mask = lines[2] if len(lines) > 2 else "24"
+        return ip, port, mask
+    return "", "", "24"
 
-def save_config(ip, port):
+def save_config(ip, port, mask):
     with open(CONFIG_FILE, "w") as f:
-        f.write(f"{ip}\n{port}\n")
+        f.write(f"{ip}\n{port}\n{mask}\n")
+
+def update_rawprint_server_port(new_port):
+    # Replace the port number in /usr/local/bin/rawprint_server.sh
+    try:
+        with open(RAWPRINT_SERVER_PATH, "r") as f:
+            lines = f.readlines()
+        new_lines = []
+        for line in lines:
+            # Replace the port number after '-p'
+            new_line = re.sub(r'(-p )\d+', r'\g<1>{}'.format(new_port), line)
+            new_lines.append(new_line)
+        with open(RAWPRINT_SERVER_PATH, "w") as f:
+            f.writelines(new_lines)
+        return True, f"Port in rawprint_server.sh updated to {new_port}."
+    except Exception as e:
+        return False, f"Failed to update port in rawprint_server.sh: {e}"
 
 class ListenerThread(QThread):
     job_received = Signal(str)
@@ -37,26 +56,20 @@ class ListenerThread(QThread):
 
     def run(self):
         try:
-            # Stop any running instance of rawprint_server.sh
-            subprocess.run(["sudo", "pkill", "-f", "/usr/local/bin/rawprint_server.sh"], check=False)
-            
-            # Example: Pass port as env variable (modify as needed)
+            subprocess.run(["sudo", "pkill", "-f", RAWPRINT_SERVER_PATH], check=False)
             env = os.environ.copy()
             if self.port:
                 env["LISTEN_PORT"] = self.port
-
             process = subprocess.Popen(
-                ["sudo", "/usr/local/bin/rawprint_server.sh"],
+                ["sudo", RAWPRINT_SERVER_PATH],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
                 env=env
             )
-
             for line in iter(process.stdout.readline, ""):
                 if line.strip():
                     self.job_received.emit(f"Job received: {line.strip()}")
-
             process.stdout.close()
             process.wait()
         except Exception as e:
@@ -105,8 +118,7 @@ class MainWindow(QMainWindow):
         self.clear_data_button.clicked.connect(self.clear_data)
         button_layout.addWidget(self.clear_data_button)
 
-        # Add new button for config
-        self.config_button = QPushButton("Set IP/Port", self)
+        self.config_button = QPushButton("Set IP/Port/Mask", self)
         self.config_button.setStyleSheet("background-color: darkblue; color: white; border-radius: 5px; padding: 10px;")
         self.config_button.clicked.connect(self.show_config_inputs)
         button_layout.addWidget(self.config_button)
@@ -134,12 +146,18 @@ class MainWindow(QMainWindow):
         self.config_input_widget.setLayout(config_layout)
         self.ip_input = QLineEdit()
         self.port_input = QLineEdit()
+        self.mask_input = QLineEdit()
         self.ip_input.setPlaceholderText("Enter IP address")
-        self.port_input.setPlaceholderText("Enter port")
+        self.port_input.setPlaceholderText("Enter port (e.g. 9100)")
+        self.mask_input.setPlaceholderText("Enter subnet mask bits (e.g. 24)")
+
         config_layout.addWidget(QLabel("Set Listener IP Address:"))
         config_layout.addWidget(self.ip_input)
         config_layout.addWidget(QLabel("Set Listener Port:"))
         config_layout.addWidget(self.port_input)
+        config_layout.addWidget(QLabel("Set Subnet Mask Bits:"))
+        config_layout.addWidget(self.mask_input)
+
         self.save_config_button = QPushButton("Save")
         self.save_config_button.clicked.connect(self.save_config)
         config_layout.addWidget(self.save_config_button)
@@ -148,63 +166,61 @@ class MainWindow(QMainWindow):
         # ---------------------------------------------------------------
 
         # Load config and set defaults
-        ip, port = load_config()
+        ip, port, mask = load_config()
         self.ip_input.setText(ip)
         self.port_input.setText(port)
+        self.mask_input.setText(mask)
         self.listener_ip = ip
         self.listener_port = port
+        self.subnet_mask = mask
 
         self.update_status("Application started.")
         self.start_listener()
 
     def show_config_inputs(self):
-        # Show/hide the config input widget
         self.config_input_widget.setVisible(not self.config_input_widget.isVisible())
 
     def save_config(self):
         ip = self.ip_input.text().strip()
         port = self.port_input.text().strip()
-        if not ip or not port:
-            self.update_status("IP and port must not be empty.")
+        mask = self.mask_input.text().strip()
+        if not ip or not port or not mask:
+            self.update_status("IP, port, and subnet mask must not be empty.")
             return
-        save_config(ip, port)
+        save_config(ip, port, mask)
         self.listener_ip = ip
         self.listener_port = port
-        self.update_status(f"Saved listener IP: {ip}, port: {port}")
+        self.subnet_mask = mask
+
+        ok, msg = update_rawprint_server_port(port)
+        self.update_status(msg)
+        self.set_static_ip(ip, mask)
         self.config_input_widget.hide()
-        self.set_static_ip(ip)
         self.restart_listener()
 
-    def set_static_ip(self, ip, gateway="10.0.0.1", dns="10.0.0.1", interface="Wired connection 1"):
+    def set_static_ip(self, ip, mask="24", gateway="10.0.0.1", interface="Wired connection 1"):
+        dns = ip  # DNS is the same as the IP
         try:
-            # Set static IP and subnet mask (/24 is typical for home networks)
             subprocess.run([
                 "sudo", "nmcli", "con", "mod", interface, 
-                "ipv4.addresses", f"{ip}/24", 
+                "ipv4.addresses", f"{ip}/{mask}", 
                 "ipv4.method", "manual"
             ], check=True)
-
-            # Set gateway
             subprocess.run([
                 "sudo", "nmcli", "con", "mod", interface, 
                 "ipv4.gateway", gateway
             ], check=True)
-
-            # Set DNS
             subprocess.run([
                 "sudo", "nmcli", "con", "mod", interface, 
                 "ipv4.dns", dns
             ], check=True)
-
-            # Bring the connection down and up again to apply changes
             subprocess.run([
                 "sudo", "nmcli", "con", "down", interface
             ], check=True)
             subprocess.run([
                 "sudo", "nmcli", "con", "up", interface
             ], check=True)
-
-            self.update_status(f"Static IP set to {ip} for {interface}")
+            self.update_status(f"Static IP set to {ip}/{mask} for {interface}")
         except subprocess.CalledProcessError as e:
             self.update_status(f"Failed to set static IP: {e}")
 
