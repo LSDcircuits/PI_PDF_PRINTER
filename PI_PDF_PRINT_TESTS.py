@@ -172,16 +172,41 @@ class MainWindow(QMainWindow):
         self.listener_port = port
         self.update_status(f"Saved listener IP: {ip}, port: {port}")
         self.config_input_widget.hide()
+        self.set_static_ip(ip)
         self.restart_listener()
-        # --- Optional: Edit dhcpcd.conf below ---
-        # self.set_static_ip(ip)
-        # ----------------------------------------
 
-    def set_static_ip(self, ip):
-        # You should carefully edit /etc/dhcpcd.conf here if needed
-        # Example: append a static IP block, or modify the file as desired
-        # WARNING: Always validate and back up /etc/dhcpcd.conf before changing!
-        pass
+    def set_static_ip(self, ip, gateway="10.0.0.1", dns="10.0.0.1", interface="Wired connection 1"):
+        try:
+            # Set static IP and subnet mask (/24 is typical for home networks)
+            subprocess.run([
+                "sudo", "nmcli", "con", "mod", interface, 
+                "ipv4.addresses", f"{ip}/24", 
+                "ipv4.method", "manual"
+            ], check=True)
+
+            # Set gateway
+            subprocess.run([
+                "sudo", "nmcli", "con", "mod", interface, 
+                "ipv4.gateway", gateway
+            ], check=True)
+
+            # Set DNS
+            subprocess.run([
+                "sudo", "nmcli", "con", "mod", interface, 
+                "ipv4.dns", dns
+            ], check=True)
+
+            # Bring the connection down and up again to apply changes
+            subprocess.run([
+                "sudo", "nmcli", "con", "down", interface
+            ], check=True)
+            subprocess.run([
+                "sudo", "nmcli", "con", "up", interface
+            ], check=True)
+
+            self.update_status(f"Static IP set to {ip} for {interface}")
+        except subprocess.CalledProcessError as e:
+            self.update_status(f"Failed to set static IP: {e}")
 
     def start_listener(self):
         self.listener_thread = ListenerThread(ip=self.listener_ip, port=self.listener_port)
@@ -190,7 +215,7 @@ class MainWindow(QMainWindow):
         self.listener_thread.start()
 
     def restart_listener(self):
-        if self.listener_thread and self.listener_thread.isRunning():
+        if hasattr(self, "listener_thread") and self.listener_thread.isRunning():
             self.listener_thread.terminate()
             self.listener_thread.wait()
         self.start_listener()
