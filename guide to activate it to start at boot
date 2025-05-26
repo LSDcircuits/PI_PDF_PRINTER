@@ -1,0 +1,38 @@
+//guide to activate it to start at boot
+nano /home/caeprinter/start_printer.sh
+// enter this into the file 
+#!/bin/bash
+source /home/caeprinter/myenv/bin/activate
+python /home/caeprinter/myproject/<filename.py>
+//save it 
+//make it executable
+chmod +x /home/caeprinter/start_printer.sh
+
+// create a systemd service
+sudo nano /etc/systemd/system/caeprinter.service
+// enter this
+[Unit]
+Description=CAE Printer Python Service
+After=network.target
+
+[Service]
+ExecStart=/home/caeprinter/start_printer.sh
+WorkingDirectory=/home/caeprinter
+StandardOutput=inherit
+StandardError=inherit
+Restart=on-failure
+User=caeprinter
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target
+
+// save it and run
+sudo systemctl daemon-reexec
+sudo systemctl daemon-reload
+sudo systemctl enable caeprinter.service
+sudo systemctl start caeprinter.service
+
+// check status 
+
+sudo systemctl status caeprinter.service
