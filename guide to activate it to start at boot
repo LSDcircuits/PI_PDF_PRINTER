@@ -5,11 +5,17 @@ nano /home/caeprinter/start_printer.sh
 source /home/caeprinter/myenv/bin/activate
 python /home/caeprinter/myproject/<filename.py>
 //save it 
+
+//make sure permissions are correct
+ls -l /home/caeprinter/start_printer.sh
+sudo chown caeprinter:caeprinter /home/caeprinter/start_printer.sh
+
 //make it executable
 chmod +x /home/caeprinter/start_printer.sh
 
 // create a systemd service
 sudo nano /etc/systemd/system/caeprinter.service
+
 // enter this
 [Unit]
 Description=CAE Printer Python Service
