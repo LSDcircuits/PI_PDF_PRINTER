@@ -3,7 +3,7 @@ nano /home/caeprinter/start_printer.sh
 // enter this into the file 
 #!/bin/bash
 source /home/caeprinter/myenv/bin/activate
-python3 /home/caeprinter/myenv/<filename.py>
+python /home/caeprinter/myproject/<filename.py>
 //save it 
 
 //make sure permissions are correct
