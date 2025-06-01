@@ -101,7 +101,7 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("CAE PS SAVER")
-        self.setFixedSize(1000, 700)
+        self.setFixedSize(1024, 600)
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         main_layout = QVBoxLayout()
@@ -301,7 +301,7 @@ class MainWindow(QMainWindow):
             self.update_status("No PDF file is currently opened.")
 
     def clear_data(self):
-        directory = "/var/spool/cups-pdf/ANONYMUS"
+        directory = "/var/spool/cups-pdf/ANONYMOUS"
         try:
             if os.path.exists(directory):
                 for filename in os.listdir(directory):
