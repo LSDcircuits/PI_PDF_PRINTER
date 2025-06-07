@@ -1,0 +1,46 @@
+//for the graphic
+
+sudo apt install libqt6pdfwidgets6
+sudo apt install libqt6pdf6
+sudo apt install libqt6pdf6
+
+sudo apt update
+sudo apt install xserver-xorg xinit openbox x11-xserver-utils python3-pyqt6 libqt6pdfwidgets6
+
+//edit open box
+mkdir -p ~/.config/openbox
+nano ~/.config/openbox/autostart
+
+//add this:
+#!/bin/bash
+xset s off
+xset -dpms
+xset s noblank
+python3 /home/caeprinter/myproject/your_app.py
+
+// execute
+chmod +x /home/caeprinter/myproject/your_app.py
+
+// install openGL for QT
+sudo apt install libgl1
+
+//get xserver for a minimal window 
+sudo apt update
+sudo apt install xinit xserver-xorg
+
+// if not installed 
+sudo apt install openbox x11-xserver-utils
+
+// try
+startx
+
+// set dusplay setting at at start
+DISPLAY=:0 xrandr --output HDMI --mode 1024x600
+
+//and open in that shell
+
+// for usb drie (external device)
+
+sudo apt install udisks2 udevil pmount ntfs-3g exfatprogs
+sudo apt update
+sudo apt install udisks2 udevil pmount
