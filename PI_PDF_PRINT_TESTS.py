@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtPdfWidgets import QPdfView
 from PySide6.QtPdf import QPdfDocument
 from PySide6.QtCore import Qt, QThread, Signal
+from PySide6.QtGui import QIcon
 import os
 
 CONFIG_FILE = "listener_config.txt"
@@ -107,6 +108,25 @@ class MainWindow(QMainWindow):
         main_layout = QVBoxLayout()
         central_widget.setLayout(main_layout)
 
+        # ---------- Top Right Off and Close Buttons -----------
+        top_btn_layout = QHBoxLayout()
+        top_btn_layout.addStretch()
+        self.off_button = QPushButton()
+        self.off_button.setIcon(QIcon.fromTheme("system-shutdown"))  # Uses system icon if available
+        self.off_button.setFixedSize( 20, 20)
+        self.off_button.setStyleSheet("background-color: transparent; border-radius: 12px;")
+        self.off_button.setToolTip("Shut Down")
+        self.off_button.clicked.connect(self.shutdown_system)
+        top_btn_layout.addWidget(self.off_button)
+        self.close_button = QPushButton("✖")
+        self.close_button.setFixedSize(20, 20)
+        self.close_button.setStyleSheet("background-color: transparent; border-radius: 12px; font-size: 12px; color: white;")
+        self.close_button.setToolTip("Close Program")
+        self.close_button.clicked.connect(self.close)
+        top_btn_layout.addWidget(self.close_button)
+        main_layout.addLayout(top_btn_layout)
+        # ------------------------------------------------------
+
         cae_label = QLabel("CAE", self)
         cae_label.setStyleSheet("font-size: 48px; font-weight: bold;")
         cae_label.setAlignment(Qt.AlignCenter)
@@ -196,6 +216,13 @@ class MainWindow(QMainWindow):
 
         self.update_status("Application started.")
         self.start_listener()
+
+    def shutdown_system(self):
+        self.update_status("Shutting down...")
+        try:
+            subprocess.Popen(["sudo", "shutdown", "now"])
+        except Exception as e:
+            self.update_status(f"Error shutting down: {e}")
 
     def show_config_inputs(self):
         self.config_input_widget.setVisible(not self.config_input_widget.isVisible())
@@ -315,7 +342,6 @@ class MainWindow(QMainWindow):
             self.update_status(f"Error while clearing data: {e}")
 
     def update_status(self, message):
-        
         self.status_label.setText(message)
 
     def closeEvent(self, event):
