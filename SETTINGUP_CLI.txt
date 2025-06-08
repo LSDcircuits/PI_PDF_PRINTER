@@ -35,7 +35,7 @@ sudo apt install openbox x11-xserver-utils
 startx
 
 // set dusplay setting at at start
-DISPLAY=:0 xrandr --output HDMI --mode 1024x600
+DISPLAY=:0 xrandr --output HDMI-1 --mode 1024x600
 
 //and open in that shell
 
