@@ -44,3 +44,38 @@ DISPLAY=:0 xrandr --output HDMI-1 --mode 1024x600
 sudo apt install udisks2 udevil pmount ntfs-3g exfatprogs
 sudo apt update
 sudo apt install udisks2 udevil pmount
+
+// to start the app manually use
+startx 
+DISPLAY=:0 xrandr --output HDMI-1 --mode 1024x600
+source /home/printer/CAE/myenv/bin/activate
+python3 /home/printer/CAE/myenv/PI_PDF_PRINT_TESTS.py
+
+// to execute on single command make shell
+sudo nano /usr/local/bin/caeprint
+
+//insert
+#!/bin/bash
+
+# Start X server if not already running
+if ! pgrep -x "Xorg" > /dev/null; then
+    startx &
+    # Wait a few seconds to allow X to start
+    sleep 5
+fi
+
+# Set display settings
+DISPLAY=:0 xrandr --output HDMI-1 --mode 1024x600
+
+# Activate Python environment
+source /home/printer/CAE/myenv/bin/activate
+
+# Run your app
+python3 /home/printer/CAE/myenv/PI_PDF_PRINT_TESTS.py
+
+make executable
+sudo chmod +x /usr/local/bin/caeprint
+
+//run using
+caeprint
+
