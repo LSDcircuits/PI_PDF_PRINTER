@@ -297,11 +297,13 @@ class MainWindow(QMainWindow):
         self.config_input_widget.hide()
         self.restart_listener()
 
+    # ----------------------------(here i mark a end to the graphical interfece and continue to functions linked to the buttons)----------------
     # ---------------------------------------------------( setting a static IP for the PC using subprocess)-------------------------------------
         # this part isnt very elegant, generally on linux you can make a file to set static values for network connections.
         # on debian for Pi, RAPSBIAN it just didnt work like im used to on normal debian or on arch so i used a method found on 
         # stack overflow which does it directly on to the temrinal, so i used Subprocess for this also, which works fine just adds alot code
-        # IP is defined previously as seen and here is where its executed
+        # IP is defined previously as seen and here is where its executed, the first functions did it in the listener class
+    
     def set_static_ip(self, ip, mask="32", interface="Wired connection 1"):
         gateway = ip
         dns = ip
@@ -329,18 +331,21 @@ class MainWindow(QMainWindow):
         except subprocess.CalledProcessError as e:
             self.update_status(f"Failed to set static IP: {e}")
 
+    #here the listener thread from the class is stated, or configured to the window
     def start_listener(self):
         self.listener_thread = ListenerThread(ip=self.listener_ip, port=self.listener_port)
         self.listener_thread.job_received.connect(self.update_status)
         self.listener_thread.error.connect(self.update_status)
         self.listener_thread.start()
-
+    # here its restarted and ran
     def restart_listener(self):
         if hasattr(self, "listener_thread") and self.listener_thread.isRunning():
             self.listener_thread.terminate()
             self.listener_thread.wait()
         self.start_listener()
-
+        
+    # this function is linked to the system reset button 
+    # uses sub process to enter commands into the terminal
     def system_reset(self):
         try:
             subprocess.run(["sudo", "systemctl", "stop", "cups"], check=True)
@@ -351,7 +356,9 @@ class MainWindow(QMainWindow):
             self.update_status("CUPS service restarted.")
         except subprocess.CalledProcessError as e:
             self.update_status(f"Error while resetting CUPS: {e}")
-
+    # this function is used to open the pdf
+    # this uses a func from the Qt lib to open the pdf and can speciy where in the file manager its open
+    # by deafoult cups saves in thid file caled "ANONYMOUS" i open it there to ease the use of the user
     def open_pdf(self):
         file_path, _ = QFileDialog.getOpenFileName(self, "Open PDF File", "/var/spool/cups-pdf/ANONYMOUS", "PDF Files (*.pdf)")
         if file_path:
@@ -360,7 +367,10 @@ class MainWindow(QMainWindow):
             self.update_status(f"PDF opened: {file_path}")
         else:
             self.update_status("No PDF file selected.")
-
+            
+    # this fucntion is used to save the pdf
+    # using shutil and Qfiledialog i can save this pdf to a specific directory, i made the driver display in a 
+    # directory i made called media so its more like in normal computers where external storage devices are locared in the media directory
     def save_pdf(self):
         if self.current_pdf_path:
             # Let user choose a directory, defaulting to /media (where USBs are usually mounted)
@@ -377,7 +387,8 @@ class MainWindow(QMainWindow):
                 self.update_status("No directory selected.")
         else:
             self.update_status("No PDF file is currently opened.")
-
+    # here  i use os to remove files in a directory
+    # rather handy and dint use subprocess with rm because i wanted to try something else. 
     def clear_data(self):
         directory = "/var/spool/cups-pdf/ANONYMOUS"
         try:
@@ -391,7 +402,8 @@ class MainWindow(QMainWindow):
                 self.update_status("Directory does not exist.")
         except Exception as e:
             self.update_status(f"Error while clearing data: {e}")
-
+    # this is the fucntion which you see is called everywhere, its used to just display the status which would
+    # normally be presented on the temrinal. 
     def update_status(self, message):
         self.status_label.setText(message)
 
