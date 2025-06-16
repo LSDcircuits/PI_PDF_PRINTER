@@ -13,24 +13,41 @@ from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtGui import QIcon
 import os
 
+# I WILL DOCUMENT HOW THIS CODE WORKS HERE AND Reference to this file as a source
+# here i define define memory
+# firsly the listener_conf file contain 3 variables, kept in a different file so config doesent change when restarting.
+# file contains // in those lines. the file is only made once using sudo nano and saved, any other changes are made in this software. 
+# 1 ip
+# 2 port
+# 3 mask
+
+# this file is accessed using the os library
 CONFIG_FILE = "listener_config.txt"
 RAWPRINT_SERVER_PATH = "/usr/local/bin/rawprint_server.sh"
 RAWPRINT_SCRIPT_PATH = "/usr/local/bin/rawprint.sh"
 
+# here the config is set up using os to get acess to the CONFIG_FILE and define these variables,
+# it first checks if the file exist and acess the info if nothing is there it returns nothing if the mask is set to 32,
+# since most printers use a 32 bit mask on it. 
+# s.read().plitlines() is a func of os which allows to read and split line on a .txt file
 def load_config():
     if os.path.exists(CONFIG_FILE):
         with open(CONFIG_FILE, "r") as f:
             lines = f.read().splitlines()
         ip = lines[0] if len(lines) > 0 else ""
         port = lines[1] if len(lines) > 1 else ""
-        mask = lines[2] if len(lines) > 2 else "24"
+        mask = lines[2] if len(lines) > 2 else "32"
         return ip, port, mask
-    return "", "", "24"
+    return "", "", "32"
 
+# here os a function which also uses os to link the written variables on the GUI to save to the text file.
+# here f.write() to write the config to the file. 
 def save_config(ip, port, mask):
     with open(CONFIG_FILE, "w") as f:
         f.write(f"{ip}\n{port}\n{mask}\n")
-
+# to write to the rawprint server its good to know what it does.
+# rawprint server is a shell script for using the nc linux tool in this the port is defined, the ip in the rawprint.sh 
+# rawprint server is also a shell file 
 def write_rawprint_server(port):
     script = f"""#!/bin/bash
 
@@ -44,7 +61,7 @@ done
         with tempfile.NamedTemporaryFile("w", delete=False) as tmpfile:
             tmpfile.write(script)
             tmp_filename = tmpfile.name
-        # Move with sudo
+        # Move with sudo using subprocess which is a tool used on python to make comman line executions. 
         subprocess.run(["sudo", "mv", tmp_filename, RAWPRINT_SERVER_PATH], check=True)
         return True, f"rawprint_server.sh updated to port {port}."
     except Exception as e:
