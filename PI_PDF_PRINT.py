@@ -56,6 +56,8 @@ def save_config(ip, port, mask):
         f.write(f"{ip}\n{port}\n{mask}\n")
 # to write to the rawprint server its good to know what it does.
 # rawprint server is a shell script for using the nc linux tool in this the port is defined, the ip in the rawprint.sh 
+# the entire script is schanched and saved in this process with {port bein rhe variable} 
+
 def write_rawprint_server(port):
     script = f"""#!/bin/bash
 
@@ -139,6 +141,9 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         # here is where the title, window size are set
+        # when starting up the program a shel sctipt which starts the graphics 
+        # drivers uses the matching resolution 1024x600 otherwise it repeats so its 
+        # crutial to have this matching 
         self.setWindowTitle("CAE PS SAVER")
         self.setFixedSize(1024, 600)
         central_widget = QWidget()
@@ -213,7 +218,7 @@ class MainWindow(QMainWindow):
         self.status_label.setAlignment(Qt.AlignCenter)
         main_layout.addWidget(self.status_label)
 
-        # here the button for opening a file is set and uses QPdf to display it
+        # this where the pdf of the selected qtg is displayed
         self.pdf_viewer = QPdfView(self)
         self.pdf_document = QPdfDocument(self)
         self.pdf_viewer.setDocument(self.pdf_document)
